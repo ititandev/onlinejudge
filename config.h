@@ -36,7 +36,7 @@ class Config {
 		/* Parse config file 'configFile'. If the process environment
 		 * is provided, environment variables can be used as expansion symbols.
 		 */
-		Config(string configFile, char** envp = 0);
+		Config(string configFile);
 
 		~Config();
 		

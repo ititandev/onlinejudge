@@ -22,7 +22,7 @@ Config::Config(string name, string parentDebugInfo) {
 	debugInfo = parentDebugInfo + ", " + name;
 }
 
-Config::Config(string configFile, char** envp) {
+Config::Config(string configFile) {
 	/*while (*envp) {
 		string envEntry = *envp;
 		size_t pos = envEntry.find('=');

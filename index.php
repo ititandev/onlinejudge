@@ -51,7 +51,7 @@
             {
                 for ($i = 0;; $i++) 
                 {
-                    $file = './upload/' . $MSSV . '_' . $i . '.zip';
+                    $file = './Upload/' . $MSSV . '_' . $i . '.zip';
                     //echo 'check file ' . $file . ': '. file_exists($file) . '<br>';
                     if (file_exists($file) == 0)
                     {
