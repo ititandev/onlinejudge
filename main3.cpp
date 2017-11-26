@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #include "File.h"
 #include "exec.h"
 #include <exception>
@@ -119,38 +120,37 @@ void preparequeue()
     }
 }
 
-string Run(const string& cmd, bool& success, const string& logfile)
+string Run(const string& cmd, bool& success)
 {
     try
-  	{
-    		string com=cmd+" &> "+logfile;
-    		int succ=system(com.c_str());
-    		fstream f(logfile,ios::in);
-    		string output;
-    		string tmp;
-    		while(!f.eof())
-    		{
-        		getline(f,tmp);
-      	 		output+=tmp+"\n";
-    		} 
-    		success=(succ==0);
-		File(logfile).deleteFile();
-    		return output;
-    	}
+    {
+    string com=cmd+" &> tmp.txt";
+    int succ=system(com.c_str());
+    fstream f("tmp.txt",ios::in);
+    string output;
+    string tmp;
+    while(!f.eof())
+    {
+        getline(f,tmp);
+        output+=tmp+"\n";
+    }
+    success=(succ==0);
+    return output;
+    }
     catch(exception& e)
     {
-
+        File("tmp.txt").deleteFile();
         throw;
     }
 }
+
 void compile(const string& dir)
 {
     try
     {
-	string cmd2="cd "+dir+";g++ -o program *.cpp";
-	string logfile=dir+"/log.txt";
+	string cmd2="g++ -o program "+dir+"/"+"*.cpp";
         bool succ;
-	string str=Run(cmd2,succ,logfile);
+        string str=Run(cmd2,succ);
 	    if(!succ)
 	    {
 		    throw MyException(str);
@@ -159,10 +159,10 @@ void compile(const string& dir)
     catch(exception& e)
     {
 	    string filename=lockPath+string("/")+File(Directory(dir).getParentDirectory()).getFilename()+string(".")+File(dir).getFilename()+string(".log");
-       	    fstream f(filename,ios::out);
+        fstream f(filename,ios::out);
 	    f<<e.what();
 	    f.close();
-	    File(filename).moveTo(dir+"/log.txt");
+	    File(filename).moveTo(dir+File(filename).getFilename());
     }
 }
 int main()
@@ -189,3 +189,24 @@ int main()
 		cout<<s;
 	}
 }
+=======
+#define _CRT_SECURE_NO_WARNINGS
+#include <iostream>
+using namespace std;
+
+#include "config.h"
+
+int main(int argc, char* argv[], char* envp[])
+{
+	Config config("config.txt", NULL);
+
+
+	cout << "frame    = '" << config.pInt("frame") << "'" << endl;
+	cout << "max_upload = '" << config.pInt("max_upload") << "'" << endl;
+	cout << "timeout = '" << config.pInt("timeout") << "'" << endl;
+	cout << endl;
+	system("pause");
+	return 0;
+}
+
+>>>>>>> 1c7407631cf818cd6e68cba25a5226d4e952dd25
