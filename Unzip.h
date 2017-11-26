@@ -1,24 +1,7 @@
+#ifndef _UNZIP_H_
+#define _UNZIP_H_
 #include "chilkat/include/CkZip.h"
 #include <string>
 using namespace std;
-bool Unzip(const string& filename, const string& directory)
-    {
-    CkZip zip;
-    bool success;
-
-    success = zip.UnlockComponent("Anything for 30-day trial");
-    if (success != true) return false;
-
-    success = zip.OpenZip(filename.c_str());
-    if (success != true) {
-        return false;
-    }
-    int unzipCount;
-    unzipCount = zip.Unzip(directory.c_str());
-    if (unzipCount < 0) {
-        return false;
-    }
-    else {
-        return true;
-    }
-    }
+bool Unzip(const string& filename, const string& directory);
+#endif
