@@ -119,37 +119,38 @@ void preparequeue()
     }
 }
 
-string Run(const string& cmd, bool& success)
+string Run(const string& cmd, bool& success, const string& logfile)
 {
     try
-    {
-    string com=cmd+" &> tmp.txt";
-    int succ=system(com.c_str());
-    fstream f("tmp.txt",ios::in);
-    string output;
-    string tmp;
-    while(!f.eof())
-    {
-        getline(f,tmp);
-        output+=tmp+"\n";
-    }
-    success=(succ==0);
-    return output;
-    }
+  	{
+    		string com=cmd+" &> "+logfile;
+    		int succ=system(com.c_str());
+    		fstream f(logfile,ios::in);
+    		string output;
+    		string tmp;
+    		while(!f.eof())
+    		{
+        		getline(f,tmp);
+      	 		output+=tmp+"\n";
+    		} 
+    		success=(succ==0);
+		File(logfile).deleteFile();
+    		return output;
+    	}
     catch(exception& e)
     {
-        File("tmp.txt").deleteFile();
+
         throw;
     }
 }
-
 void compile(const string& dir)
 {
     try
     {
-	string cmd2="g++ -o program "+dir+"/"+"*.cpp";
+	string cmd2="cd "+dir+";g++ -o program *.cpp";
+	string logfile=dir+"/log.txt";
         bool succ;
-        string str=Run(cmd2,succ);
+	string str=Run(cmd2,succ,logfile);
 	    if(!succ)
 	    {
 		    throw MyException(str);
@@ -158,10 +159,10 @@ void compile(const string& dir)
     catch(exception& e)
     {
 	    string filename=lockPath+string("/")+File(Directory(dir).getParentDirectory()).getFilename()+string(".")+File(dir).getFilename()+string(".log");
-        fstream f(filename,ios::out);
+       	    fstream f(filename,ios::out);
 	    f<<e.what();
 	    f.close();
-	    File(filename).moveTo(dir+File(filename).getFilename());
+	    File(filename).moveTo(dir+"/log.txt");
     }
 }
 int main()
