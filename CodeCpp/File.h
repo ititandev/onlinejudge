@@ -37,6 +37,10 @@ class File
 	{
 		fs::rename(pathFile, des);
 	}
+	bool isFileEmpty()
+	{
+		return fs::is_empty(pathFile);
+	}
 	bool deleteFile()
 	{
 		return fs::remove(pathFile);
