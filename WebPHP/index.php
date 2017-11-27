@@ -39,29 +39,50 @@
                 if (isset($_POST['view']))
                 {
                     $MSSV = $_POST['MSSV']; 
-                    echo '<br>';
-                    echo '<div class="row" style=" font-size: 150%;">';
-                    echo '<label for="name" style="color: #ca5354; width: 500px;" >' . 'Kết quả chấm điểm của sinh viên mã số ' . $MSSV . '</label> ';
-                    echo '</div>';
-                    echo '<br>';
-
                     for ($i = 1;; $i++)
                     {
-                        $file = './Source/' . $MSSV . '_' . $i . '.zip';
-                        //echo 'check file ' . $file . ': '. file_exists($file) . '<br>';
-                        if (file_exists($file) == 0)
+                        $dir = './Source/' . $MSSV . '/' . $i . '/';
+                        if (file_exists($dir) == 0)
                         {
                             break;
                         }
                     }
-                    //echo $i;
+                    $i--;
+
+                    echo '<br>';
+                    echo '<div class="row" style=" font-size: 150%;">';
+                    echo '<label for="name" style="color: #0066ff; width: 700px;" >' . 'Kết quả chấm điểm của sinh viên mã số ' . $MSSV . '</label> ';
+                    echo '</div>';
+                    
+                    if ($i == 0)
+                    {
+                        echo '<div class="row" style=" font-size: 120%;"> <label for="name" style="color: #ca5354; width: 500px;" >Sinh viên chưa nộp bài lần nào</label></div> ';
+                    }
+                    else
+                    {
+                        $file = './Source/' . $MSSV . '/' . $i . '/score.log';
+                        if (file_exists($file) == 0)
+                            echo '<div class="row" style=" font-size: 120%;"> <label for="name" style="color: #ca5354; width: 500px;" >Bài nộp mới nhất của sinh viên đang được chấm</label></div> ';
+                        else
+                        {
+                            echo '<div class="row" style=" font-size: 120%;"> <label for="name" style="color: #00cc00; width: 500px;" >' ;
+                            $myfile = fopen($file, "r") or die("Unable to open file!");
+                            while(!feof($myfile)) {
+                            echo fgets($myfile).'<br>';
+                            }
+                            fclose($myfile);
+                            echo '</label></div>';
+
+                            //echo 
+                        }
+                    }
                 }
 
                 if(isset($_POST['up']) && isset($_FILES['fileUpload']))
                 {
                     $MSSV = $_POST['MSSV']; 
                     if($_FILES['fileUpload']['error']>0)
-                        echo "Upload lỗi rồi!";
+                    echo '<div class="row" style=" font-size: 120%;"> <label for="name" style="color: #ca5354; width: 500px;" >Upload thất bại</label></div> ';
                     else if ($_FILES['fileUpload']['type'] != 'application/zip')
                         echo "Vui lòng nộp file .zip";
                     else
@@ -77,18 +98,10 @@
                                 break;
                             }
                         }
-                        echo '<br>';
-                        echo '<div class="row">';
-                        echo '<label for="name">';
-                        echo $MSSV . ' nộp bài thành công <br>';
-                        echo '</label> ';
-                        echo '</div>';
-                        echo '<div class="row">';
-                        echo '<label for="name">';
+                        echo '<div class="row" style=" font-size: 120%;"> <label for="name" style="color: #00cc00; width: 500px;" >' ;
+                        echo 'Sinh viên ' . $MSSV . ' nộp bài thành công <br>';
                         echo 'Dung lượng: ' . ((int)$_FILES['fileUpload']['size']/1024) .'KB';
-                        echo '</label> ';
-                        echo '</div>';
-                        echo '<br>';
+                        echo '</label></div>';
                         
                     }
                         
