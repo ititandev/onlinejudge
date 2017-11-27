@@ -2,6 +2,9 @@
 #include "exec.h"
 #include "Unzip.h"
 #include "MyTime.h"
+#include "xmlMake.h"
+#include "equalFiles.h"
+#include "config.h"
 #include <exception>
 #include <thread>
 #include <iostream>
@@ -12,11 +15,16 @@
 #include <regex>
 #include "chilkat/include/CkZip.h"
 
+int frame, max_upload;
+string timeout;
+string testcase_path;
+int testcase_num;
+int *testcase_weight;
+string log_path;
+string lock_path;
+string source_path;
+string upload_path;
 
-string uploadPath="/home/tuankiet/Project/Upload";
-string lockPath="/home/tuankiet/Project/lock";
-string sourcePath="/home/tuankiet/Project/Source";
-int delay=1000;//ms
 struct FileInfo
 {
 	string path;
@@ -28,7 +36,7 @@ bool operator<(const FileInfo& op1, const FileInfo& op2)
 }
 string getLogFile(const string& dir)
 {
-	return lockPath+"/"+File(Directory(dir).getParentDirectory()).getFilenameOnly()+"."+File(dir).getFilename()+".log";
+	return lock_path+"/"+File(Directory(dir).getParentDirectory()).getFilenameOnly()+"."+File(dir).getFilename()+".log";
 }
 priority_queue<FileInfo> fileList;   
 
@@ -42,6 +50,10 @@ class MyException:public exception
     {
         text=str;
     }
+	MyException()
+	{
+		text="";
+	}
     char const* what() const throw()
     {
         return text.c_str();
@@ -65,7 +77,7 @@ string getFolder(const string path)
 		throw MyException("invalid format file name");
 	}
 	string parent=Directory(path).getParentDirectory();
-	int index=Directory(sourcePath+"/"+name).dirsCount()+1;
+	int index=Directory(source_path+"/"+name).dirsCount()+1;
 	return name+"/"+to_string(index);
     }
     catch(exception& e)
@@ -79,13 +91,13 @@ void addFileList()
 
     try
     {
-	Directory dir(uploadPath);
+	Directory dir(upload_path);
 	vector<string> lst=dir.getListFile();
 		if(lst.size()==0) return;
 	for(auto& i : lst)
 	{	
 		
-		string dirPath=sourcePath+"/"+getFolder(i);
+		string dirPath=source_path+"/"+getFolder(i);
 		if(!Directory::create(dirPath))
 		{
 			throw MyException("Can't create directory "+dirPath);
@@ -97,7 +109,7 @@ void addFileList()
 		}
 		else
 		{
-			fstream f(getLogFile(i),ios::out|ios::app);
+			fstream f(getLogFile(dirPath),ios::out|ios::app);
 			f.close();
 		}
 		fileList.emplace(FileInfo{dirPath,getTimeStamp(i)});
@@ -110,32 +122,108 @@ void addFileList()
         throw;
     }
 }
-void compile(const string& dir)
+void compile(const string& dir, const string& logfile)
 {
     try
     {
-	string cmd2="cd "+dir+";g++ -o program *.cpp";
-	string logfile=dir+"/log.txt";
-        bool succ;
-	string str=Run(cmd2,succ,logfile);
-	    if(!succ)
-	    {
-		    throw MyException(str);
-	    }
-		File(getLogFile(dir)).deleteFile();
+	createMakefile(dir);
+	string cmd2="cd "+dir+"; make";
+    bool succ;
+	Run(cmd2,succ,logfile);
+	if(!succ)
+	{
+		throw MyException();
+	}
     }
     catch(exception& e)
     {
-	    string filename=getLogFile(dir);
-       	    fstream f(filename,ios::out|ios::app);
+	    throw;
+    }
+}
+void Run(const string& pathToSubmit)
+{
+	try
+	{
+		string remove = "rm -f " + pathToSubmit + "/*.out";
+		system(remove.c_str());
+		for (size_t i = 0; i < testcase_num; i++)
+		{
+			string command = "timeout " + timeout +" "+ pathToSubmit + "/program ";
+			string param = testcase_path + "/" + to_string(i) + ".in " + pathToSubmit + "/" + to_string(i) + ".out";
+
+			system((command + param +";if [ $? -eq 124 ]; then   echo 'Timeout error'; fi"+ " &>> " + getLogFile(pathToSubmit)).c_str());                                                                                                                                                                                                                                 
+
+
+			//Ghi vo log chinh va xoa log tam.... ben toi File.h bi loi
+		}
+	}
+	catch(exception& e)
+	{
+		throw;
+	}
+
+}
+
+//Tinh diem luu vo score.log
+void Mark(const string& pathToSubmit)
+{
+	try
+	{
+		string remove = "rm -f " + pathToSubmit + "/score.log";
+		system(remove.c_str());
+		fstream file(pathToSubmit + "/score.log", ios::out);
+		double score = 0;
+		string ss;
+		for (size_t i = 0; i < testcase_num; i++)
+		{
+			ss += "Testcase " + to_string(i + 1);
+			ifstream origin(testcase_path + "/" + to_string(i) + ".out");
+			ifstream compare(pathToSubmit + "/" + to_string(i) + ".out");
+			if (equalFiles(origin, compare))
+			{
+				ss += ": Pass\t";
+				ss += to_string(testcase_weight[i]/10) + '\n';
+				score += testcase_weight[i];
+			}
+			else
+			ss += ": Fail\t0\n";
+		}
+		score /= 10;
+		file << "Score: \t\t\t" << score << endl;
+		file << ss;
+		file.close();
+	}
+	catch(exception& e)
+	{
+		throw;
+	}
+}
+void Excute(const string& dir)
+{
+	try
+	{
+		fstream score(dir+"/"+"score.log",ios::out);
+		score<<"Score:\t\t\t0\n";
+		score.close();
+		string logfile=getLogFile(dir);
+		compile(dir,logfile);
+		Run(dir);
+		Mark(dir);
+		File(logfile).moveTo(dir+"/log.txt");
+		
+	}
+	catch(exception& e)
+	{
+		string filename=getLogFile(dir);
+       	fstream f(filename,ios::out|ios::app);
 	    f<<e.what();
 	    f.close();
 	    File(filename).moveTo(dir+"/log.txt");
-    }
+	}
 }
 void Recover()
 {
-	vector<string> lst=Directory(lockPath).getListFile();
+	vector<string> lst=Directory(lock_path).getListFile();
 	if(lst.size()>0)
 	{
 		cout<<"Found lock file in lock directory\n";
@@ -150,24 +238,45 @@ void Recover()
 		}
 		if(str=="n"||str=="N")
 		{
-			cout<<"Don't recover last sesion, removing the lock files.....\n";
+			cout<<"Don't recover last session, removing the lock files.....\n";
 			for(auto& p:lst) File(p).deleteFile();
 		}
 		else
 		{
-			cout<<"Recovering the last sesion.....\n";
+			cout<<"Recovering the last session.....\n";
 			for(auto& p:lst)
 			{
 				string filename=File(p).getFilenameOnly();
 				for(int i=0;i<filename.size();++i) if(filename[i]=='.') filename[i]='/';
-				fileList.emplace(FileInfo{sourcePath+"/"+filename,0});
+				fileList.emplace(FileInfo{source_path+"/"+filename,0});
 			}
 		}
 	}
 }
+void LoadConfig()
+{
+	Config config("/etc/dsa.conf");
+	frame = config.pInt("frame");
+	max_upload = config.pInt("max_upload");
+	timeout = config.pString("timeout");
+	testcase_path = config.pString("testcase_path");
+	log_path = config.pString("log_path");
+	lock_path = config.pString("lock_path");
+	source_path = config.pString("source_path");
+	upload_path = config.pString("upload_path");
+	testcase_num = config.pInt("testcase_num");
+	testcase_weight = new int[testcase_num];
+	for (int i = 0; i < testcase_num; i++)
+	{
+		testcase_weight[i] = config.pInt("testcase" + to_string(i) + "_weight");
+		cout << testcase_weight[i] << "  ";
+	}
+	
+}
 int main()
 {
 	Recover();
+	LoadConfig();
 	while(true)
 	{
 	try
@@ -178,11 +287,11 @@ int main()
 		{
 			FileInfo fileInfo=fileList.top();
 			fileList.pop();
-			arrThread.push_back(thread(compile,fileInfo.path));
+			arrThread.push_back(thread(Excute,fileInfo.path));
 
 		}
 		for(int i=0;i<arrThread.size();++i) arrThread[i].join();
-		usleep(delay*1000);
+		usleep(frame*1000);
 	}
 	catch(exception& e)
 	{
