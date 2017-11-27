@@ -1,7 +1,0 @@
-max_upload = 100
-frame = 2
-timeout = 1
-testcase_num = 6
-testcase_path = './testcase'
-log_path = './log'
-
