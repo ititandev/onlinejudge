@@ -1,12 +1,14 @@
 #include "File.h"
 #include "exec.h"
+#include "Unzip.h"
+#include "MyTime.h"
 #include <exception>
 #include <thread>
-#include <string>
 #include <iostream>
 #include <cstdlib>
 #include <queue>
 #include <fstream>
+#include <unistd.h>
 #include <regex>
 #include "chilkat/include/CkZip.h"
 
@@ -14,8 +16,21 @@
 string uploadPath="/home/tuankiet/Project/Upload";
 string lockPath="/home/tuankiet/Project/lock";
 string sourcePath="/home/tuankiet/Project/Source";
-queue<string> sources;
-
+int delay=1000;//ms
+struct FileInfo
+{
+	string path;
+	long timeStamp;
+};
+bool operator<(const FileInfo& op1, const FileInfo& op2)
+{
+	return op1.timeStamp>op2.timeStamp;
+}
+string getLogFile(const string& dir)
+{
+	return lockPath+"/"+File(Directory(dir).getParentDirectory()).getFilenameOnly()+"."+File(dir).getFilename()+".log";
+}
+priority_queue<FileInfo> fileList;   
 
 
 class MyException:public exception
@@ -32,37 +47,6 @@ class MyException:public exception
         return text.c_str();
     }
 };
-
-
-bool Unzip(const string& filename, const string& directory)
-{
-    try
-    {
-        CkZip zip;
-        bool success;
-
-        success = zip.UnlockComponent("Anything for 30-day trial");
-        if (success != true) return false;
-
-        success = zip.OpenZip(filename.c_str());
-        if (success != true) {
-            return false;
-        }
-        int unzipCount;
-        unzipCount = zip.Unzip(directory.c_str());
-        if (unzipCount < 0) {
-        return false;
-        }
-        else    {
-            return true;
-        }
-    }
-    catch(exception& e)
-    {
-        throw;
-    }
-}
-
 
 string getFolder(const string path)
 {
@@ -90,12 +74,14 @@ string getFolder(const string path)
     }
 }
 
-void preparequeue()
+void addFileList()
 {
+
     try
     {
 	Directory dir(uploadPath);
 	vector<string> lst=dir.getListFile();
+		if(lst.size()==0) return;
 	for(auto& i : lst)
 	{	
 		
@@ -109,37 +95,18 @@ void preparequeue()
 		{
 			throw MyException("Unzip error filename: "+dirPath);
 		}
-		sources.push(dirPath);
+		else
+		{
+			fstream f(getLogFile(i),ios::out|ios::app);
+			f.close();
+		}
+		fileList.emplace(FileInfo{dirPath,getTimeStamp(i)});
 		File(i).deleteFile();
 	}
+		
     }
     catch(exception& e)
     {
-        throw;
-    }
-}
-
-string Run(const string& cmd, bool& success, const string& logfile)
-{
-    try
-  	{
-    		string com=cmd+" &> "+logfile;
-    		int succ=system(com.c_str());
-    		fstream f(logfile,ios::in);
-    		string output;
-    		string tmp;
-    		while(!f.eof())
-    		{
-        		getline(f,tmp);
-      	 		output+=tmp+"\n";
-    		} 
-    		success=(succ==0);
-		File(logfile).deleteFile();
-    		return output;
-    	}
-    catch(exception& e)
-    {
-
         throw;
     }
 }
@@ -155,37 +122,75 @@ void compile(const string& dir)
 	    {
 		    throw MyException(str);
 	    }
+		File(getLogFile(dir)).deleteFile();
     }
     catch(exception& e)
     {
-	    string filename=lockPath+string("/")+File(Directory(dir).getParentDirectory()).getFilename()+string(".")+File(dir).getFilename()+string(".log");
-       	    fstream f(filename,ios::out);
+	    string filename=getLogFile(dir);
+       	    fstream f(filename,ios::out|ios::app);
 	    f<<e.what();
 	    f.close();
 	    File(filename).moveTo(dir+"/log.txt");
     }
 }
+void Recover()
+{
+	vector<string> lst=Directory(lockPath).getListFile();
+	if(lst.size()>0)
+	{
+		cout<<"Found lock file in lock directory\n";
+		cout<<"Do you want to recover last sesion(Y/N): ";
+		string str;
+		getline(cin,str);
+		cout<<str<<endl;
+		while(str!="Y"&&str!="N"&&str!="y"&&str!="n")
+		{
+			cout<<"Input error, try again!\n";
+			getline(cin,str);
+		}
+		if(str=="n"||str=="N")
+		{
+			cout<<"Don't recover last sesion, removing the lock files.....\n";
+			for(auto& p:lst) File(p).deleteFile();
+		}
+		else
+		{
+			cout<<"Recovering the last sesion.....\n";
+			for(auto& p:lst)
+			{
+				string filename=File(p).getFilenameOnly();
+				for(int i=0;i<filename.size();++i) if(filename[i]=='.') filename[i]='/';
+				fileList.emplace(FileInfo{sourcePath+"/"+filename,0});
+			}
+		}
+	}
+}
 int main()
 {
+	Recover();
+	while(true)
+	{
 	try
 	{
-		preparequeue();
+		addFileList();
 		vector<thread> arrThread;
-		while(!sources.empty())
+		while(!fileList.empty())
 		{
-			string dir=sources.front();
-			sources.pop();
-			arrThread.push_back(thread(compile,dir));
+			FileInfo fileInfo=fileList.top();
+			fileList.pop();
+			arrThread.push_back(thread(compile,fileInfo.path));
 
 		}
 		for(int i=0;i<arrThread.size();++i) arrThread[i].join();
+		usleep(delay*1000);
 	}
 	catch(exception& e)
 	{
 		cout<<e.what();
 	}
-	catch(string& s)
+	catch(...)
 	{
-		cout<<s;
+		cout<<"Unexpected error occurs...";
+	}
 	}
 }
