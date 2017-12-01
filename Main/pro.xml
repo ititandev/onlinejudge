@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<project>
+<var name="LIBS">-lpthread -lstdc++fs</var>
+	<target name="program" type="output">
+		<dep>main.o</dep>
+		<dep>exec.o</dep>
+		<dep>Unzip.o</dep>
+		<dep>MyTime.o</dep>
+		<dep type="var">LIBPATH</dep>
+		<dep type="var">LIBS</dep>
+	</target>
+	<target name="MyTime" type="object">
+		<dep>MyTime.cpp</dep>
+	</target>
+	<target name="exec" type="object">
+		<dep>exec.cpp</dep>
+	</target>
+	<target name="Unzip" type="object">
+		<dep>Unzip.cpp</dep>
+	</target>
+	<target name="main" type="object">
+		<dep>main.cpp</dep>
+	</target>
+</project>
