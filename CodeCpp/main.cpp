@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <regex>
 #include "chilkat/include/CkZip.h"
+#include <stdio.h>
 
 int frame, max_upload;
 string timeout;
@@ -148,11 +149,14 @@ void Run(const string& pathToSubmit)
 		system(remove.c_str());
 		for (size_t i = 0; i < testcase_num; i++)
 		{
-			string command = "timeout " + timeout +" "+ pathToSubmit + "/program ";
+			//string command = "timeout " + timeout +" "+ pathToSubmit + "/program ";
+			string command = "cd " + pathToSubmit + ";./program ";
 			string param = testcase_path + "/" + to_string(i) + ".in " + pathToSubmit + "/" + to_string(i) + ".out";
 
-			system((command + param +";if [ $? -eq 124 ]; then   echo 'Timeout error'; fi"+ " &>> " + getLogFile(pathToSubmit)).c_str());                                                                                                                                                                                                                                 
-
+			//system((command + param +" ; if [ $? -eq 124 ]; then echo \"Timeout error\";fi"+ " &>> " + getLogFile(pathToSubmit)).c_str());
+			system("/mnt/d/xampp/htdocs/dsa/Source/1/22/program");
+			//"timeout 1 /mnt/d/xampp/htdocs/dsa/Source/1/5/program "/mnt/d/xampp/htdocs/dsa/CodeCpp/testcase/5.in" "/mnt/d/xampp/htdocs/dsa/Source/1/5/5.out";" 
+			//system(("echo \"abc=\\\"" + command + param + "\\\";$abc;\" > sh.sh; chmod 777 sh.sh").c_str());
 
 			//Ghi vo log chinh va xoa log tam.... ben toi File.h bi loi
 		}
@@ -275,8 +279,8 @@ void LoadConfig()
 }
 int main()
 {
-	Recover();
 	LoadConfig();
+	Recover();
 	while(true)
 	{
 	try

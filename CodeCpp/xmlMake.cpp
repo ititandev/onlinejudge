@@ -16,7 +16,7 @@ void createMakefile(const string& dir)
 	buffer.push_back('\0');
 	doc.parse<0>(&buffer[0]);
 	xml_node<> *node=doc.first_node();
-	fstream f("Makefile",ios::out);
+	fstream f(dir + "/Makefile",ios::out);
 	while(node!=0)
 	{
 		if(string(node->name())=="variables")

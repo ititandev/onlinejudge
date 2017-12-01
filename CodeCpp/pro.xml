@@ -1,23 +1,23 @@
-<?xml version="1.0"?>
-<variables name="LIBPATH">-L/home/tuankiet/Project</variables>
-<variables name="LIBS">-lchilkat-9.5.0 -lpthread -lstdc++fs</variables>
-	<target name="program" type="output">
-		<dependency>main.o</dependency>
-		<dependency>exec.o</dependency>
-		<dependency>Unzip.o</dependency>
-		<dependency>MyTime.o</dependency>
-		<dependency type="var">LIBPATH</dependency>
-		<dependency type="var">LIBS</dependency>
-	</target>
-	<target name="MyTime" type="object">
-		<dependency>MyTime.cpp</dependency>
-	</target>
-	<target name="exec" type="object">
-		<dependency>exec.cpp</dependency>
-	</target>
-	<target name="Unzip" type="object">
-		<dependency>Unzip.cpp</dependency>
-	</target>
-	<target name="main" type="object">
-		<dependency>main.cpp</dependency>
-	</target>
+<?xml version="1.0"?/>
+  <variables name="LIBPATH">-L/home/tuankiet/Project</variables>
+  <variables name="LIBS">-lchilkat-9.5.0 -lpthread -lstdc++fs</variables>
+  <target name="program" type="output">
+    <dependency>main.o</dependency>
+    <dependency>exec.o</dependency>
+    <dependency>Unzip.o</dependency>
+    <dependency>MyTime.o</dependency>
+    <dependency type="var">LIBPATH</dependency>
+    <dependency type="var">LIBS</dependency>
+  </target>
+  <target name="MyTime" type="object">
+    <dependency>MyTime.cpp</dependency>
+  </target>
+  <target name="exec" type="object">
+    <dependency>exec.cpp</dependency>
+  </target>
+  <target name="Unzip" type="object">
+    <dependency>Unzip.cpp</dependency>
+  </target>
+  <target name="main" type="object">
+    <dependency>main.cpp</dependency>
+  </target>

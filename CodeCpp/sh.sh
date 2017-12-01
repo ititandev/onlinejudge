@@ -1,0 +1,1 @@
+abc="timeout 1 /mnt/d/xampp/htdocs/dsa/Source/1/13/program /mnt/d/xampp/htdocs/dsa/CodeCpp/testcase/5.in /mnt/d/xampp/htdocs/dsa/Source/1/13/5.out";$abc
