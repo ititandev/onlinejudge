@@ -8,6 +8,7 @@
 #include <exception>
 #include <thread>
 #include <iostream>
+#include <iomanip>
 #include <cstdlib>
 #include <queue>
 #include <fstream>
@@ -18,7 +19,6 @@ struct ass_config_t
 {
 	string timeout;
 	int testcase_num;
-	int *testcase_weight;
 	string testcase_path;
 };
 
@@ -62,11 +62,7 @@ void LoadConfig()
 		ass_config[i].timeout = config.pString("timeout");
 		ass_config[i].testcase_path = config.pString("testcase_path");
 		ass_config[i].testcase_num = config.pInt("testcase_num");
-		ass_config[i].testcase_weight = new int[ass_config[i].testcase_num];
-		for (int i = 0; i < ass_config[i].testcase_num; i++)
-			ass_config[i].testcase_weight[i] = config.pInt("testcase" + to_string(i) + "_weight");
 	}
-
 }
 
 void writeLog(string str)
@@ -74,12 +70,14 @@ void writeLog(string str)
 	fstream log("/etc/onlinejudge/log.log", ios_base::app);
 	log << str << endl;
 	log.close();
+	cout << str << endl;
 }
 
 struct FileInfo
 {
 	string path;
 	long timeStamp;
+	int ass_num;
 };
 bool operator<(const FileInfo& op1, const FileInfo& op2)
 {
@@ -111,26 +109,24 @@ public:
 	}
 };
 
-string getFolder(const string path)
+string getFolder(const string path, string ass_name)
 {
 	try
 	{
-		cout << "regex:";
 		boost::regex r("([0-9]*)_([0-9]*)");
 		boost::smatch m;
 		string name;
 		string filename = File(path).getFilenameOnly();
-		cout << filename << endl;
 		if (boost::regex_match(filename, m, r))
 		{
 			name = m[1];
 		}
 		else
 		{
-			throw MyException("invalid format file name");
+			throw MyException("invalid format file name " + filename);
 		}
 		string parent = Directory(path).getParentDirectory();
-		int index = Directory(source_path + "/" + name).dirsCount() + 1;
+		int index = Directory(source_path + "/" + ass_name + "/" + name).dirsCount() + 1;
 		return name + "/" + to_string(index);
 	}
 	catch (exception& e)
@@ -141,72 +137,63 @@ string getFolder(const string path)
 
 void addFileList()
 {
-
-	try
+	for (int i = 0; i < ass_num; i++)
 	{
-		Directory dir(upload_path);
-		vector<string> lst = dir.getListFile();
-		if (lst.size() == 0) return;
-		for (auto& i : lst)
+		string path = upload_path + "/" + ass_name[i];
+		Directory dir(path);
+		vector<string> listFile = dir.getListFile();
+		if (listFile.size() == 0) return;
+		for (auto& filePath : listFile)
 		{
-
-			string dirPath = source_path + "/" + getFolder(i);
-			if (!Directory::create(dirPath))
+			string desPath;
+			try
 			{
-				throw MyException("Can't create directory " + dirPath);
+				desPath = source_path + "/" + ass_name[i] + "/" + getFolder(filePath, ass_name[i]);
 			}
-
-			if (!Unzip(i, dirPath))
+			catch (exception& e)
 			{
-				throw MyException("Unzip error filename: " + dirPath);
+				writeLog(e.what());
+				continue;
 			}
+			if (!Directory::create(desPath))
+				throw MyException("Can't create directory " + desPath);
+			if (!Unzip(filePath, desPath))
+				throw MyException("Unzip error filename: " + desPath);
 			else
 			{
-				fstream f(getLogFile(dirPath), ios::out | ios::app);
+				writeLog("Move " + filePath + " to " + desPath);
+				fstream f(getLogFile(desPath), ios::out | ios::app);
 				f.close();
 			}
-			fileList.emplace(FileInfo{ dirPath,getTimeStamp(i) });
-			File(i).deleteFile();
+			fileList.emplace(FileInfo{ desPath,getTimeStamp(filePath), i });
+			File(filePath).deleteFile();
 		}
-
-	}
-	catch (exception& e)
-	{
-		throw;
 	}
 }
-void compile(const string& dir, const string& logfile)
+void Compile(FileInfo& submit, const string& logfile)
+{
+	createMakefile(submit.path);
+	string cmd2 = "cd " + submit.path + "; make";
+	bool succ;
+	Run(cmd2, succ, logfile);
+	if (!succ)
+	{
+		throw MyException();
+	}
+}
+void Run(FileInfo& submit)
 {
 	try
 	{
-		createMakefile(dir);
-		string cmd2 = "cd " + dir + "; make";
-		bool succ;
-		Run(cmd2, succ, logfile);
-		if (!succ)
-		{
-			throw MyException();
-		}
-	}
-	catch (exception& e)
-	{
-		throw;
-	}
-}
-void Run(const string& pathToSubmit)
-{
-	try
-	{
+		string& pathToSubmit = submit.path;
 		string remove = "rm -f " + pathToSubmit + "/*.out";
 		system(remove.c_str());
-		for (size_t i = 0; i < testcase_num; i++)
+		for (size_t i = 0; i < ass_config[submit.ass_num].testcase_num; i++)
 		{
-			string command = "timeout " + timeout + " " + pathToSubmit + "/program ";
-			string param = testcase_path + "/" + to_string(i) + ".in " + pathToSubmit + "/" + to_string(i) + ".out";
+			string command = "timeout " + ass_config[submit.ass_num].timeout + " " + pathToSubmit + "/program ";
+			string param = ass_config[submit.ass_num].testcase_path + "/" + to_string(i) + ".in " + pathToSubmit + "/" + to_string(i) + ".out";
 
 			system((command + param + " ; if [ $? -eq 124 ]; then echo \"Timeout error\";fi" + " &>> " + getLogFile(pathToSubmit)).c_str());
-
-
 			//Ghi vo log chinh va xoa log tam.... ben toi File.h bi loi
 		}
 	}
@@ -218,31 +205,30 @@ void Run(const string& pathToSubmit)
 }
 
 //Tinh diem luu vo score.log
-void Mark(const string& pathToSubmit)
+void Mark(FileInfo& submit)
 {
 	try
 	{
+		string& pathToSubmit = submit.path;
 		string remove = "rm -f " + pathToSubmit + "/score.log";
 		system(remove.c_str());
 		fstream file(pathToSubmit + "/score.log", ios::out);
-		double score = 0;
+		int pass_num = 0;
 		string ss;
-		for (size_t i = 0; i < testcase_num; i++)
+		for (size_t i = 0; i < ass_config[submit.ass_num].testcase_num; i++)
 		{
-			ss += "Testcase " + to_string(i + 1);
-			ifstream origin(testcase_path + "/" + to_string(i) + ".out");
+			ss += "Testcase " + to_string(i + 1) + "\n";
+			ifstream origin(ass_config[submit.ass_num].testcase_path + "/" + to_string(i) + ".out");
 			ifstream compare(pathToSubmit + "/" + to_string(i) + ".out");
 			if (equalFiles(origin, compare))
 			{
-				ss += ": Pass\t";
-				ss += to_string(testcase_weight[i] / 10) + '\n';
-				score += testcase_weight[i];
+				ss += "Pass\n";
+				pass_num++;
 			}
 			else
-				ss += ": Fail\t0\n";
+				ss += "Fail\n";
 		}
-		score /= 10;
-		file << "Score: \t\t\t" << score << endl;
+		file << "Score: " << endl << fixed  << setprecision(1) << (float) pass_num / ass_config[submit.ass_num].testcase_num *10 << endl;
 		file << ss;
 		file.close();
 	}
@@ -251,65 +237,67 @@ void Mark(const string& pathToSubmit)
 		throw;
 	}
 }
-void Excute(const string& dir)
+void Execute(FileInfo fileInfo)
 {
+	string& submitPath = fileInfo.path;
+	int &ass_num = fileInfo.ass_num;
 	bool write = false;
 	try
 	{
-		//fstream score(dir+"/"+"score.log",ios::out);
-		//score<<"Score:\t\t\t0\n";
-		//score.close();
-		string logfile = getLogFile(dir);
-		compile(dir, logfile);
-		Run(dir);
-		Mark(dir);
-		File(logfile).moveTo(dir + "/log.txt");
-
+		string logfile = getLogFile(submitPath);
+		Compile(fileInfo, logfile);
+		Run(fileInfo);
+		Mark(fileInfo);
+		File(logfile).moveTo(submitPath + "/log.txt");
 	}
 	catch (exception& e)
 	{
-		fstream score(dir + "/" + "score.log", ios::out);
+		fstream score(submitPath + "/" + "score.log", ios::out);
 		score << "Score:\t\t\t0\n";
 		score.close();
-		string filename = getLogFile(dir);
+		string filename = getLogFile(submitPath);
 		fstream f(filename, ios::out | ios::app);
 		f << e.what();
 		f.close();
-		File(filename).moveTo(dir + "/log.txt");
+		File(filename).moveTo(submitPath + "/log.txt");
 	}
 }
 void Recover()
 {
-	vector<string> lst = Directory(lock_path).getListFile();
-
-	if (lst.size() > 0)
+	for (int i = 0; i < ass_num; i++)
 	{
-		cout << "Found lock file in lock directory\n";
-		cout << "Do you want to recover last sesion(Y/N): ";
-		string str;
-		getline(cin, str);
-		while (str != "Y"&&str != "N"&&str != "y"&&str != "n")
+		string path = lock_path + "/" + ass_name[i];
+		vector<string> lst = Directory(path).getListFile();
+
+		if (lst.size() > 0)
 		{
-			cout << "Input error, try again!\n";
+			cout << "Found lock file in lock directory\n";
+			cout << "Do you want to recover last sesion(Y/N): ";
+			string str;
 			getline(cin, str);
-		}
-		if (str == "n" || str == "N")
-		{
-			cout << "Don't recover last session, removing the lock files.....\n";
-			for (auto& p : lst) File(p).deleteFile();
-		}
-		else
-		{
-			cout << "Recovering the last session.....\n";
-			for (auto& p : lst)
+			while (str != "Y"&&str != "N"&&str != "y"&&str != "n")
 			{
-				string filename = File(p).getFilenameOnly();
-				for (int i = 0; i < filename.size(); ++i) if (filename[i] == '.') filename[i] = '/';
-				fileList.emplace(FileInfo{ source_path + "/" + filename,0 });
+				cout << "Input error, try again!\n";
+				getline(cin, str);
 			}
+			if (str == "n" || str == "N")
+			{
+				cout << "Don't recover last session, removing the lock files.....\n";
+				for (auto& p : lst) File(p).deleteFile();
+			}
+			else
+			{
+				cout << "Recovering the last session.....\n";
+				for (auto& p : lst)
+				{
+					string filename = File(p).getFilenameOnly();
+					for (int i = 0; i < filename.size(); ++i) if (filename[i] == '.') filename[i] = '/';
+					fileList.emplace(FileInfo{ source_path + "/" + filename,0, i });
+				}
+			}
+			cout << "Recover done....\n";
+			cout << "Continue new session.....\n";
 		}
-		cout << "Recover done....\n";
-		cout << "Continue new session.....\n";
 	}
 
 }
@@ -328,10 +316,9 @@ int main()
 			{
 				FileInfo fileInfo = fileList.top();
 				fileList.pop();
-				arrThread.push_back(thread(Excute, fileInfo.path));
-
+				arrThread.push_back(thread(Execute, fileInfo));
 			}
-			for (int i = 0; i < arrThread.size(); ++i) arrThread[i].detach();
+			for (int i = 0; i < arrThread.size(); ++i) arrThread[i].join();
 			usleep(frame * 1000);
 		}
 		catch (exception& e)
