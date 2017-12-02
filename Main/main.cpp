@@ -23,7 +23,6 @@ struct ass_config_t
 };
 
 int frame;
-string log_path;
 string lock_path;
 string source_path;
 string upload_path;
@@ -41,7 +40,6 @@ void LoadConfig()
 	}
 	Config config("/etc/onlinejudge/onlinejudge.conf");
 	frame = config.pInt("frame");
-	log_path = config.pString("log_path");
 	lock_path = config.pString("lock_path");
 	source_path = config.pString("source_path");
 	upload_path = config.pString("upload_path");
@@ -71,7 +69,12 @@ void LoadConfig()
 
 }
 
-
+void writeLog(string str)
+{
+	fstream log("/etc/onlinejudge/log.log", ios_base::app);
+	log << str << endl;
+	log.close();
+}
 
 struct FileInfo
 {
@@ -334,6 +337,7 @@ int main()
 		catch (exception& e)
 		{
 			cout << e.what();
+			writeLog(e.what());
 		}
 		catch (...)
 		{
