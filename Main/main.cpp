@@ -331,7 +331,7 @@ int main()
 				arrThread.push_back(thread(Excute, fileInfo.path));
 
 			}
-			for (int i = 0; i < arrThread.size(); ++i) arrThread[i].join();
+			for (int i = 0; i < arrThread.size(); ++i) arrThread[i].detach();
 			usleep(frame * 1000);
 		}
 		catch (exception& e)
