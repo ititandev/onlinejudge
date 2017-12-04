@@ -2,10 +2,10 @@
 #include "exec.h"
 #include "Unzip.h"
 #include "MyTime.h"
-#include "xmlMake.h"
 #include "equalFiles.h"
 #include "config.h"
 #include <exception>
+#include <string>
 #include <thread>
 #include <iostream>
 #include <iomanip>
@@ -14,12 +14,21 @@
 #include <fstream>
 #include <unistd.h>
 #include <boost/regex.hpp>
+#include <stdio.h>
+#include <vector>
+#include "rapidxml.hpp"
+using namespace rapidxml;
+using namespace std;
 
 struct ass_config_t
 {
 	string timeout;
 	int testcase_num;
 	string testcase_path;
+	string xml_yes;
+	string xml_no;
+	string xml_path;
+	string output_format;
 };
 
 int frame;
@@ -30,12 +39,20 @@ int ass_num;
 string *ass_name;
 ass_config_t *ass_config;
 
+void writeLog(string str)
+{
+	fstream log("/etc/onlinejudge/log.log", ios_base::app);
+	log << str << endl;
+	log.close();
+	cout << str << endl;
+}
+
 void LoadConfig()
 {
 	auto file = File("/etc/onlinejudge/onlinejudge.conf");
 	if (!file.isFileExist())
 	{
-		cout << "Not found config file at '/etc/onlinejudge/onlinejudge.conf'";
+		writeLog("Not found config file at '/etc/onlinejudge/onlinejudge.conf'");
 		exit(1);
 	}
 	Config config("/etc/onlinejudge/onlinejudge.conf");
@@ -55,7 +72,7 @@ void LoadConfig()
 		auto file = File("/etc/onlinejudge/" + ass_name[i] + ".conf");
 		if (!file.isFileExist())
 		{
-			cout << "Not found config file for " + ass_name[i] + " at '/etc/onlinejudge/" + ass_name[i] + ".conf'";
+			writeLog("Not found config file for " + ass_name[i] + " at '/etc/onlinejudge/" + ass_name[i] + ".conf'");
 			exit(1);
 		}
 		Config config("/etc/onlinejudge/" + ass_name[i] + ".conf");
@@ -63,14 +80,6 @@ void LoadConfig()
 		ass_config[i].testcase_path = config.pString("testcase_path");
 		ass_config[i].testcase_num = config.pInt("testcase_num");
 	}
-}
-
-void writeLog(string str)
-{
-	fstream log("/etc/onlinejudge/log.log", ios_base::app);
-	log << str << endl;
-	log.close();
-	cout << str << endl;
 }
 
 struct FileInfo
@@ -123,7 +132,8 @@ string getFolder(const string path, string ass_name)
 		}
 		else
 		{
-			throw MyException("invalid format file name " + filename);
+			File(path).deleteFile();
+			throw MyException("Delete " + path + "because invalid format file name ");
 		}
 		string parent = Directory(path).getParentDirectory();
 		int index = Directory(source_path + "/" + ass_name + "/" + name).dirsCount() + 1;
@@ -170,9 +180,111 @@ void addFileList()
 		}
 	}
 }
+void createMakefile(FileInfo& submit)
+{
+	if (File(submit.path + "/pro.xml").isFileExist())
+	{
+		string& config = ass_config[submit.ass_num].xml_yes;
+		if (config == "auto")
+			;
+		//Generate pro.xml auto
+		else if (config == "hard")
+		{
+			if (!File(submit.path + "/pro.xml").deleteFile())
+			{
+				writeLog("Error delete " + submit.path + "/pro.xml");
+				throw MyException("Error pro.xml");
+			}
+			File(ass_config[submit.ass_num].xml_path).copyTo(submit.path + "/pro.xml");
+			writeLog("Copy " + ass_config[submit.ass_num].xml_path + " to " + submit.path + "/pro.xml");
+		}
+		else if (config == "keep")
+			;
+		else if (config == "error")
+			throw MyException("Error pro.xml");
+		else
+		{
+			writeLog("Error config xml_yes = '" + config + "'");
+			throw MyException("Error pro.xml");
+		}
+			
+	}
+	else
+	{
+		string& config = ass_config[submit.ass_num].xml_no;
+		if (config == "auto")
+			;
+		//Generate pro.xml auto
+		else if (config == "hard")
+		{
+			if (!File(submit.path + "/pro.xml").deleteFile())
+			{
+				writeLog("Error delete " + submit.path + "/pro.xml");
+				throw MyException("Error pro.xml");
+			}
+			File(ass_config[submit.ass_num].xml_path).copyTo(submit.path + "/pro.xml");
+			writeLog("Copy " + ass_config[submit.ass_num].xml_path + " to " + submit.path + "/pro.xml");
+		}
+		else if (config == "error")
+			throw MyException("Error pro.xml");
+		else
+		{
+			writeLog("Error config xml_no  = '" + config + "'");
+			throw MyException("Error pro.xml");
+		}
+	}
+	xml_document<> doc;
+	ifstream theFile(submit.path + "/pro.xml");
+	vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
+	buffer.push_back('\0');
+	doc.parse<0>(&buffer[0]);
+	xml_node<> *node = doc.first_node();
+	fstream f(submit.path + "/Makefile", ios::out);
+	while (node != 0)
+	{
+		if (string(node->name()) == "variables")
+		{
+			f << node->first_attribute()->value() << "=";
+			f << node->value() << "\n";
+		}
+		else
+		{
+			if (string(node->name()) == "target")
+			{
+				xml_attribute<> *attr = node->first_attribute();
+				string name = attr->value();
+				attr = attr->next_attribute();
+				string type = attr->value();
+				xml_node<>* child = node->first_node();
+				string depend;
+				string link;
+				while (child)
+				{
+					if (string(child->name()) == "dependency")
+					{
+						attr = child->first_attribute();
+						if (attr)
+						{
+							if (string(attr->value()) == "var") link += string(" ${") + string(child->value()) + string("}");
+						}
+						else
+							depend = depend + " " + child->value();
+					}
+					child = child->next_sibling();
+				}
+				f << name << ": ";
+				f << depend << "\n";
+				f << "\t";
+				if (type == "output") f << "g++ " << depend << " " << link << " -o " << name << endl;
+				else f << "g++ -c " << depend << endl;
+			}
+		}
+		node = node->next_sibling();
+	}
+}
 void Compile(FileInfo& submit, const string& logfile)
 {
-	createMakefile(submit.path);
+	createMakefile(submit);
 	string cmd2 = "cd " + submit.path + "; make";
 	bool succ;
 	Run(cmd2, succ, logfile);
@@ -228,7 +340,7 @@ void Mark(FileInfo& submit)
 			else
 				ss += "Fail\n";
 		}
-		file << "Score: " << endl << fixed  << setprecision(1) << (float) pass_num / ass_config[submit.ass_num].testcase_num *10 << endl;
+		file << "Score: " << endl << fixed << setprecision(1) << (float)pass_num / ass_config[submit.ass_num].testcase_num * 10 << endl;
 		file << ss;
 		file.close();
 	}
@@ -299,7 +411,6 @@ void Recover()
 			cout << "Continue new session.....\n";
 		}
 	}
-
 }
 
 int main()
@@ -323,12 +434,11 @@ int main()
 		}
 		catch (exception& e)
 		{
-			cout << e.what();
 			writeLog(e.what());
 		}
 		catch (...)
 		{
-			cout << "Unexpected error occurs...";
+			writeLog("Unexpected error occurs...");
 		}
 	}
 }

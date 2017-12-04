@@ -11,7 +11,7 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' )
 
     if ( $result->num_rows == 0 ) // User doesn't exist
     { 
-        $_SESSION['message'] = "Tài khoản với email này không tồn tại!";
+        $_SESSION['message'] = "Tài khoản với MSSV này không tồn tại!";
         header("location: error.php");
     }
     else { // User exists (num_rows != 0)
@@ -36,7 +36,7 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' )
 
         Please click this link to reset your password:
 
-        http://localhost/login/reset.php?email='.$email.'&hash='.$hash;  
+        http://localhost/login/reset.php?email='.$mssv.'&hash='.$hash;  
 
         mail($to, $subject, $message_body);
 
@@ -60,7 +60,7 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' )
     <form action="forgot.php" method="post">
      <div class="field-wrap">
       <label>
-        Email Address<span class="req">*</span>
+        MSSV<span class="req">*</span>
       </label>
       <input type="text" required autocomplete="off" name="mssv"/>
     </div>

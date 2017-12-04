@@ -45,13 +45,13 @@ else {
             </button>
             <div class="collapse navbar-collapse" id="navbarResponsive">
                <ul class="navbar-nav ml-auto">
-                  <li class="nav-item active">
-                     <a class="nav-link" href="submit.php"><strong>Nộp bài</strong>
-                     <span class="sr-only">(current)</span>
+                  <li class="nav-item ">
+                     <a class="nav-link" href="submit.php">Nộp bài
                      </a>
                   </li>
-                  <li class="nav-item">
-                     <a class="nav-link" href="result.php">Kết quả</a>
+                  <li class="nav-item active">
+                     <a class="nav-link" href="result.php"><strong>Kết quả</strong></a>
+                     <span class="sr-only">(current)</span>
                   </li>
                   <li class="nav-item">
                      <a class="nav-link" href="history.php">Lịch sử nộp bài</a>
@@ -77,12 +77,13 @@ else {
       </nav>
       <!-- Page Content -->
       <div class="container">
-         <h3 class="mt-5">Nộp bài</h3>
-         <p>Nộp file zip nén bài tập lớn tại đây.</p>
+         <h3 class="mt-5">Kết quả</h3>
+         <p>Chọn assignment và xem kết quả về lần nộp bài mới nhất.</p>
 
-         <form action="" method="post" enctype="multipart/form-data">
+         <form action="" method="post">
          <div class="form-group">
-          <select class="form-control" id="selectass" onchange="document.getElementById('text_content').value=this.options[this.selectedIndex].text">
+          <label for="sel1">Chọn bài tập lớn:</label>
+            <select class="form-control" id="selectass" onchange="document.getElementById('text_content').value=this.options[this.selectedIndex].text">
             <option value="" disabled selected>Chọn bài tập lớn</option>
             <?php
                 $conf = parse_ini_file("onlinejudge.conf");
@@ -90,76 +91,60 @@ else {
                     if (isset($conf["ass". $i . "_name"]))
                         echo '<option>' . $conf["ass" . $i . "_name"] . '</option>';
             ?>
+            </select>
           </select>
           <input type="hidden" name="ass_name" id="text_content" value="" />
+          <script>
+              document.getElementById('text_content').value="ass1";
+          </script>
           </div>
-         <div class="form-group">
-            <input type="file" name="fileUpload" class="file" style="visibility: hidden;position: absolute;">
-            <div class="input-group col-xs-12">
-               <span class="input-group-addon"><i class="glyphicon glyphicon-picture"></i></span>
-               <input type="text" class="form-control input-lg" disabled placeholder="Chọn .zip chứa bài tập lớn">
-               <span class="input-group-btn">
-               <button class="browse btn btn-primary input-lg" type="button"><i class="glyphicon glyphicon-search"></i> Chọn</button>
-               </span>
-            </div>
-         </div>
          <div class="text-center">
-         <input type="submit" name="up" class="btn btn-primary center-block" value="Nộp bài" style="width: 150px">
+         <input type="submit" name="view" class="btn btn-primary center-block" value="Xem kết quả" style="width: 150px">
          </div>
-
-         <?php
-          echo '<br>';
-          $conf = parse_ini_file("onlinejudge.conf");
-          if(isset($_POST['up']) && isset($_FILES['fileUpload']))
-          {
-            if ($_POST['ass_name'] == "")
-            {
-                echo '<div style="color: #ca5354;">Chọn một bài tập lớn để nộp</div> ';
-            }
-            else
-            {
-              $MSSV = $_SESSION['mssv'];
-              if($_FILES['fileUpload']['error']>0)
-              echo '<div style="color: #ca5354;">Upload thất bại</div> ';
-              else if (preg_match("/.+\.zip/", $_FILES['fileUpload']['name']) != 1)     
-                  echo '<div style="color: #ca5354;">Vui lòng nộp file .zip</div> ';
-              else
-              {
-                  $i = 1;
-                  for ($i = 1;; $i++) 
-                  {
-                      $file = $conf["upload_path"] . "/" . $_POST["ass_name"] . '/' . $MSSV . '_' . $i . '.zip';
-                      if (file_exists($file) == 0)
-                      {
-                          move_uploaded_file($_FILES['fileUpload']['tmp_name'],$file);
-                          chmod($file, 0777);
-                          break;
-                      }
-                  }
-                  echo '<div style="color: #00cc00" >' ;
-                  echo 'Nộp bài thành công lần vào ' . $_POST["ass_name"] . ' <br>';
-                  echo 'Dung lượng: ' . round((int)$_FILES['fileUpload']['size']/1024, 2) .'KB';
-                  echo '</div>';
-                  
-              }
-            }
-                  
-          }
-          ?>
          </form>
          
+        
 
 
 
 
-
-         <!--<h1 class="mt-5">Kết quả</h1>
          <div class="form-group">
             <label for="exampleFormControlTextarea1">Thông tin chấm điểm</label>
             <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" style=" height: 150px;display: block; margin: 0 auto;">
+            <?php
+                if(isset($_POST['view']))
+                {
+                    $conf = parse_ini_file("onlinejudge.conf");
+                    $MSSV = $_SESSION['mssv'];
+                    if($_FILES['fileUpload']['error']>0)
+                    echo '<div style="color: #ca5354;">Upload thất bại</div> ';
+                    else if (preg_match("/.+\.zip/", $_FILES['fileUpload']['name']) != 1)     
+                        echo '<div style="color: #ca5354;">Vui lòng nộp file .zip</div> ';
+                    else
+                    {
+                        $i = 1;
+                        for ($i = 1;; $i++) 
+                        {
+                            $file = $conf["upload_path"] . "/" . $_POST["ass_name"] . '/' . $MSSV . '_' . $i . '.zip';
+                            if (file_exists($file) == 0)
+                            {
+                                move_uploaded_file($_FILES['fileUpload']['tmp_name'],$file);
+                                chmod($file, 0777);
+                                break;
+                            }
+                        }
+                        echo '<div style="color: #00cc00" >' ;
+                        echo 'Nộp bài thành công lần vào ' . $_POST["ass_name"] . ' <br>';
+                        echo 'Dung lượng: ' . round((int)$_FILES['fileUpload']['size']/1024, 2) .'KB';
+                        echo '</div>';
+                        
+                    }
+                        
+                }
+            ?>
             </textarea>
          </div>
-         -->
+         
       </div>
       <!-- /.container -->
       <!-- Bootstrap core JavaScript -->
