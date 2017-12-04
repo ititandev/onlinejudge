@@ -1,0 +1,7 @@
+g++   ptbac2.cpp   -o program
+Timeout error
+Timeout error
+Timeout error
+Timeout error
+Timeout error
+Timeout error

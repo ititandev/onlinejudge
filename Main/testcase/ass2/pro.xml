@@ -1,4 +1,8 @@
-<?xml version = "1.0"?>
-<target name = "program" type = "output" >
-<dependency> ptbac2.cpp </dependency>
-</target>
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+	<target name="program" type="output">
+		<dependency>input.cpp</dependency>
+		<dependency>main.cpp</dependency>
+		<header>input.h</header>
+	</target>
+</project>

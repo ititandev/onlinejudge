@@ -1,5 +1,6 @@
 #ifndef _xmlMake_H_
-#define _xmlMake_H_H
+#define _xmlMake_H_
 #include <string>
-void createMakefile(const std::string& dir);
+void createMakeFile(const std::string& dir);
+void createBuildXml(const std::string& dir);
 #endif

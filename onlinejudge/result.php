@@ -82,7 +82,6 @@ else {
 
          <form action="" method="post">
          <div class="form-group">
-          <label for="sel1">Chọn bài tập lớn:</label>
             <select class="form-control" id="selectass" onchange="document.getElementById('text_content').value=this.options[this.selectedIndex].text">
             <option value="" disabled selected>Chọn bài tập lớn</option>
             <?php
@@ -94,56 +93,186 @@ else {
             </select>
           </select>
           <input type="hidden" name="ass_name" id="text_content" value="" />
-          <script>
-              document.getElementById('text_content').value="ass1";
-          </script>
           </div>
          <div class="text-center">
          <input type="submit" name="view" class="btn btn-primary center-block" value="Xem kết quả" style="width: 150px">
          </div>
-         </form>
          
-        
-
-
-
-
-         <div class="form-group">
-            <label for="exampleFormControlTextarea1">Thông tin chấm điểm</label>
-            <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" style=" height: 150px;display: block; margin: 0 auto;">
-            <?php
-                if(isset($_POST['view']))
+         
+        <?php
+            
+            if(isset($_POST['view']))
+            {
+                echo '<br>';
+                if ($_POST['ass_name'] == "")
                 {
+                    echo '<div style="color: #ca5354;">Chọn một bài tập lớn để xem</div> <br>';
+                }
+                else
+                {
+                    $times = 1;
                     $conf = parse_ini_file("onlinejudge.conf");
                     $MSSV = $_SESSION['mssv'];
-                    if($_FILES['fileUpload']['error']>0)
-                    echo '<div style="color: #ca5354;">Upload thất bại</div> ';
-                    else if (preg_match("/.+\.zip/", $_FILES['fileUpload']['name']) != 1)     
-                        echo '<div style="color: #ca5354;">Vui lòng nộp file .zip</div> ';
+                    for (;; $times++)
+                    {
+                        $dir = $conf['source_path'] . '/' . $_POST['ass_name'] . '/' . $MSSV . '/' . $times . '/';
+                        if (file_exists($dir) == 0)
+                        {
+                            break;
+                        }
+                    }
+                    $times--;    
+                    if ($times == 0)
+                    {
+                        echo '<div style="color: #ca5354;" >Sinh viên chưa nộp bài lần nào vào ' . $_POST['ass_name'] . '</div><br>';
+                    }
                     else
                     {
-                        $i = 1;
-                        for ($i = 1;; $i++) 
+                        echo '<h4 style="color: #00cc00;" >Kết quả lần nộp thứ ' . $times . '</h4><br>';
+                        $file = $conf["source_path"] . '/' . $_POST["ass_name"] . '/' . $MSSV . '/' . $times . '/' . 'score.log';
+                        if (file_exists($file) == 0)
                         {
-                            $file = $conf["upload_path"] . "/" . $_POST["ass_name"] . '/' . $MSSV . '_' . $i . '.zip';
-                            if (file_exists($file) == 0)
+                            echo '<div style="color: #ca5354" >Bài nộp mới nhất của sinh viên đang được chấm</div><br> ';
+                        }  
+                        else
+                        {
+                            $myfile = fopen($file, "r") or die("Unable to open file!");
+                            echo '<div class="table-responsive">          
+                            <table class="table table-bordered table-hover">';
+                            $bool = false;
+                            for($i= 1; !feof($myfile); $i++) 
                             {
-                                move_uploaded_file($_FILES['fileUpload']['tmp_name'],$file);
-                                chmod($file, 0777);
-                                break;
+                                if ($i == 1)
+                                    echo '<thead>';
+                                if ($i % 2 == 1)
+                                {
+                                    if ($i == 1)
+                                        echo '<tr class="info">';  
+                                    else
+                                        echo '<tr>';
+                                }
+                                if ($i == 3)  
+                                {
+                                    echo '<tbody>';
+                                    $bool = true;
+                                }
+                                if ($i <= 2)
+                                    echo '<th>' . fgets($myfile) . '</th>';
+                                else
+                                    echo '<td>' . fgets($myfile) . '</td>';
+                                if ($i % 2 == 0)
+                                    echo '</tr>';
+                                if ($i == 2)
+                                    echo '</thead>';
+                                
+                            }
+                            if ($bool)
+                                echo '</tbody>';
+                            echo '</table></div>';
+                            fclose($myfile);
+
+
+                            $file2 = $conf["source_path"] . '/' . $_POST["ass_name"] . '/' . $MSSV . '/' . $times . '/' . 'log.txt';
+                            if (file_exists($file2))
+                            {
+                                echo '<div style="color: #ca5354;" >Thông tin biên dịch và lỗi chương trình</div><br>
+                                <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" style=" height: 300px;display: block; margin: 0 auto;"
+                                >';
+    
+                                $myfile2 = fopen($file2, "r") or die("Unable to open file!");
+                                $line = fgets($myfile2);
+                                while ($line != "")
+                                {
+                                    echo $line;
+                                    $line = fgets($myfile2);
+                                }
+                                echo '</textarea><br><br>';
                             }
                         }
-                        echo '<div style="color: #00cc00" >' ;
-                        echo 'Nộp bài thành công lần vào ' . $_POST["ass_name"] . ' <br>';
-                        echo 'Dung lượng: ' . round((int)$_FILES['fileUpload']['size']/1024, 2) .'KB';
-                        echo '</div>';
+                        
                         
                     }
-                        
                 }
-            ?>
-            </textarea>
-         </div>
+            }
+            else if (isset($_GET['times']))
+            {
+                $conf = parse_ini_file("onlinejudge.conf");
+                $MSSV = $_SESSION['mssv'];
+                $times = $_GET['times'];
+                $dir = $conf['source_path'] . '/' . $_GET['ass_name'] . '/' . $MSSV . '/' . $times . '/';
+                if (file_exists($dir) == 0)
+                {
+                    echo '<div style="color: #ca5354" >Sinh viên không có lần nộp thứ ' . $times . '</div><br> ';
+                }
+                else
+                {
+                    echo '<h4 style="color: #00cc00;" >Kết quả lần nộp thứ ' . $times . '</h4><br>';
+                    $file = $conf["source_path"] . '/' . $_GET["ass_name"] . '/' . $MSSV . '/' . $times . '/' . 'score.log';
+                    if (file_exists($file) == 0)
+                    {
+                        echo '<div style="color: #ca5354" >Bài nộp mới nhất của sinh viên đang được chấm</div><br> ';
+                    } 
+                    else
+                    {
+                        $myfile = fopen($file, "r") or die("Unable to open file!");
+                        echo '<div class="table-responsive">          
+                        <table class="table table-bordered table-hover">';
+                        $bool = false;
+                        for($i= 1; !feof($myfile); $i++) 
+                        {
+                            if ($i == 1)
+                                echo '<thead>';
+                            if ($i % 2 == 1)
+                            {
+                                if ($i == 1)
+                                    echo '<tr class="info">';  
+                                else
+                                    echo '<tr>';
+                            }
+                            if ($i == 3)  
+                            {
+                                echo '<tbody>';
+                                $bool = true;
+                            }
+                            if ($i <= 2)
+                                echo '<th>' . fgets($myfile) . '</th>';
+                            else
+                                echo '<td>' . fgets($myfile) . '</td>';
+                            if ($i % 2 == 0)
+                                echo '</tr>';
+                            if ($i == 2)
+                                echo '</thead>';
+                            
+                        }
+                        if ($bool)
+                            echo '</tbody>';
+                        echo '</table></div>';
+                        fclose($myfile);
+
+
+                        $file2 = $conf["source_path"] . '/' . $_GET["ass_name"] . '/' . $MSSV . '/' . $times . '/' . 'log.txt';
+                        if (file_exists($file2))
+                        {
+                            echo '<div style="color: #ca5354;" >Thông tin biên dịch và lỗi chương trình</div><br>
+                            <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" style=" height: 300px;display: block; margin: 0 auto;"
+                            >';
+
+                            $myfile2 = fopen($file2, "r") or die("Unable to open file!");
+                            $line = fgets($myfile2);
+                            while ($line != "")
+                            {
+                                echo $line;
+                                $line = fgets($myfile2);
+                            }
+                            echo '</textarea><br><br>';
+                        }
+                    }
+                }
+                 
+
+            }
+        ?>
+        </form>
          
       </div>
       <!-- /.container -->

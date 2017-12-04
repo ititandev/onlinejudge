@@ -1,0 +1,9 @@
+g++   ptbac2.cpp   -o program
+ptbac2.cpp: In function ‘int main(int, char**)’:
+ptbac2.cpp:10:8: error: ‘tru’ was not declared in this scope
+  while(tru
+        ^
+ptbac2.cpp:11:2: error: expected ‘)’ before ‘if’
+  if (argv < 3 || argv >3)
+  ^
+make: *** [program] Error 1

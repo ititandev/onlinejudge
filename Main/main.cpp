@@ -2,10 +2,10 @@
 #include "exec.h"
 #include "Unzip.h"
 #include "MyTime.h"
+#include "xmlMake.h"
 #include "equalFiles.h"
 #include "config.h"
 #include <exception>
-#include <string>
 #include <thread>
 #include <iostream>
 #include <iomanip>
@@ -14,11 +14,10 @@
 #include <fstream>
 #include <unistd.h>
 #include <boost/regex.hpp>
+#include "outputformat.cpp"
+#include "MyException.h"
+#include <time.h>
 #include <stdio.h>
-#include <vector>
-#include "rapidxml.hpp"
-using namespace rapidxml;
-using namespace std;
 
 struct ass_config_t
 {
@@ -42,7 +41,13 @@ ass_config_t *ass_config;
 void writeLog(string str)
 {
 	fstream log("/etc/onlinejudge/log.log", ios_base::app);
-	log << str << endl;
+	time_t     now = time(0);
+	struct tm  tstruct;
+	char       buf[80];
+	tstruct = *localtime(&now);
+	strftime(buf, sizeof(buf), "%Y-%m-%d %X", &tstruct);
+
+	log << string(buf) << " " << str << endl;
 	log.close();
 	cout << str << endl;
 }
@@ -79,9 +84,22 @@ void LoadConfig()
 		ass_config[i].timeout = config.pString("timeout");
 		ass_config[i].testcase_path = config.pString("testcase_path");
 		ass_config[i].testcase_num = config.pInt("testcase_num");
+		ass_config[i].xml_yes = config.pString("xml_yes");
+		ass_config[i].xml_no = config.pString("xml_no");
+		ass_config[i].xml_path = config.pString("xml_path");
 	}
 }
+void checkFolder()
+{
 
+	Directory::create(upload_path);
+	for (int i = 0; i < ass_num; i++)
+	{
+		Directory::create(upload_path + "/" + ass_name[i]);
+		Directory::create(source_path + "/" + ass_name[i]);
+	}
+	Directory::create(lock_path);
+}
 struct FileInfo
 {
 	string path;
@@ -97,26 +115,6 @@ string getLogFile(const string& dir)
 	return lock_path + "/" + File(Directory(dir).getParentDirectory()).getFilenameOnly() + "." + File(dir).getFilename() + ".log";
 }
 priority_queue<FileInfo> fileList;
-
-
-class MyException :public exception
-{
-private:
-	string text;
-public:
-	MyException(const string& str)
-	{
-		text = str;
-	}
-	MyException()
-	{
-		text = "";
-	}
-	char const* what() const throw()
-	{
-		return text.c_str();
-	}
-};
 
 string getFolder(const string path, string ass_name)
 {
@@ -180,14 +178,15 @@ void addFileList()
 		}
 	}
 }
-void createMakefile(FileInfo& submit)
+
+
+void CreateXML(FileInfo& submit)
 {
 	if (File(submit.path + "/pro.xml").isFileExist())
 	{
 		string& config = ass_config[submit.ass_num].xml_yes;
 		if (config == "auto")
-			;
-		//Generate pro.xml auto
+			createBuildXml(submit.path);
 		else if (config == "hard")
 		{
 			if (!File(submit.path + "/pro.xml").deleteFile())
@@ -207,14 +206,12 @@ void createMakefile(FileInfo& submit)
 			writeLog("Error config xml_yes = '" + config + "'");
 			throw MyException("Error pro.xml");
 		}
-			
 	}
 	else
 	{
 		string& config = ass_config[submit.ass_num].xml_no;
 		if (config == "auto")
-			;
-		//Generate pro.xml auto
+			createBuildXml(submit.path);
 		else if (config == "hard")
 		{
 			if (!File(submit.path + "/pro.xml").deleteFile())
@@ -233,70 +230,26 @@ void createMakefile(FileInfo& submit)
 			throw MyException("Error pro.xml");
 		}
 	}
-	xml_document<> doc;
-	ifstream theFile(submit.path + "/pro.xml");
-	vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	doc.parse<0>(&buffer[0]);
-	xml_node<> *node = doc.first_node();
-	fstream f(submit.path + "/Makefile", ios::out);
-	while (node != 0)
-	{
-		if (string(node->name()) == "variables")
-		{
-			f << node->first_attribute()->value() << "=";
-			f << node->value() << "\n";
-		}
-		else
-		{
-			if (string(node->name()) == "target")
-			{
-				xml_attribute<> *attr = node->first_attribute();
-				string name = attr->value();
-				attr = attr->next_attribute();
-				string type = attr->value();
-				xml_node<>* child = node->first_node();
-				string depend;
-				string link;
-				while (child)
-				{
-					if (string(child->name()) == "dependency")
-					{
-						attr = child->first_attribute();
-						if (attr)
-						{
-							if (string(attr->value()) == "var") link += string(" ${") + string(child->value()) + string("}");
-						}
-						else
-							depend = depend + " " + child->value();
-					}
-					child = child->next_sibling();
-				}
-				f << name << ": ";
-				f << depend << "\n";
-				f << "\t";
-				if (type == "output") f << "g++ " << depend << " " << link << " -o " << name << endl;
-				else f << "g++ -c " << depend << endl;
-			}
-		}
-		node = node->next_sibling();
-	}
+
 }
 void Compile(FileInfo& submit, const string& logfile)
 {
-	createMakefile(submit);
+	writeLog("Compiling " + submit.path);
+	CreateXML(submit);
+	createMakeFile(submit.path);
 	string cmd2 = "cd " + submit.path + "; make";
 	bool succ;
 	Run(cmd2, succ, logfile);
 	if (!succ)
 	{
-		throw MyException();
+		throw MyException("Compile error");
 	}
 }
 void Run(FileInfo& submit)
 {
 	try
 	{
+		writeLog("Running " + submit.path);
 		string& pathToSubmit = submit.path;
 		string remove = "rm -f " + pathToSubmit + "/*.out";
 		system(remove.c_str());
@@ -306,7 +259,6 @@ void Run(FileInfo& submit)
 			string param = ass_config[submit.ass_num].testcase_path + "/" + to_string(i) + ".in " + pathToSubmit + "/" + to_string(i) + ".out";
 
 			system((command + param + " ; if [ $? -eq 124 ]; then echo \"Timeout error\";fi" + " &>> " + getLogFile(pathToSubmit)).c_str());
-			//Ghi vo log chinh va xoa log tam.... ben toi File.h bi loi
 		}
 	}
 	catch (exception& e)
@@ -321,6 +273,7 @@ void Mark(FileInfo& submit)
 {
 	try
 	{
+		writeLog("Marking " + submit.path);
 		string& pathToSubmit = submit.path;
 		string remove = "rm -f " + pathToSubmit + "/score.log";
 		system(remove.c_str());
@@ -334,11 +287,13 @@ void Mark(FileInfo& submit)
 			ifstream compare(pathToSubmit + "/" + to_string(i) + ".out");
 			if (equalFiles(origin, compare))
 			{
-				ss += "Pass\n";
+				ss += "Pass";
 				pass_num++;
 			}
 			else
-				ss += "Fail\n";
+				ss += "Fail";
+			if (i < ass_config[submit.ass_num].testcase_num - 1)
+				ss += "\n";
 		}
 		file << "Score: " << endl << fixed << setprecision(1) << (float)pass_num / ass_config[submit.ass_num].testcase_num * 10 << endl;
 		file << ss;
@@ -351,6 +306,7 @@ void Mark(FileInfo& submit)
 }
 void Execute(FileInfo fileInfo)
 {
+	writeLog("Start auto mark for " + fileInfo.path);
 	string& submitPath = fileInfo.path;
 	int &ass_num = fileInfo.ass_num;
 	bool write = false;
@@ -365,7 +321,7 @@ void Execute(FileInfo fileInfo)
 	catch (exception& e)
 	{
 		fstream score(submitPath + "/" + "score.log", ios::out);
-		score << "Score:\t\t\t0\n";
+		score << "Score:\n0";
 		score.close();
 		string filename = getLogFile(submitPath);
 		fstream f(filename, ios::out | ios::app);
@@ -373,6 +329,7 @@ void Execute(FileInfo fileInfo)
 		f.close();
 		File(filename).moveTo(submitPath + "/log.txt");
 	}
+	writeLog("Finish auto mark for " + fileInfo.path);
 }
 void Recover()
 {
@@ -416,6 +373,7 @@ void Recover()
 int main()
 {
 	LoadConfig();
+	checkFolder();
 	Recover();
 	while (true)
 	{
