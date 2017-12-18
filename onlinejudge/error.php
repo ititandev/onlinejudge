@@ -5,10 +5,12 @@ session_start();
 <!DOCTYPE html>
 <html>
 <head>
+<link href="img/logo.png" rel="icon"> 
   <title>Lỗi</title>
   <?php include 'css/css.html'; ?>
 </head>
 <body>
+<div class="bg"> </div>
 <div class="form">
     <h1>LỖI</h1>
     <p>

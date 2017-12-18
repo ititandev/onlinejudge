@@ -7,10 +7,12 @@ session_start();
 <head>
   <title>Success</title>
   <?php include 'css/css.html'; ?>
+  <link href="img/logo.png" rel="icon"> 
 </head>
 <body>
+<div class="bg"> </div>
 <div class="form">
-    <h1><?= 'Success'; ?></h1>
+    <h1><?= 'Thành công'; ?></h1>
     <p>
     <?php 
     if( isset($_SESSION['message']) AND !empty($_SESSION['message']) ):

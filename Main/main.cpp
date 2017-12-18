@@ -150,7 +150,8 @@ void addFileList()
 		string path = upload_path + "/" + ass_name[i];
 		Directory dir(path);
 		vector<string> listFile = dir.getListFile();
-		if (listFile.size() == 0) return;
+		if (listFile.size() == 0)
+			continue;
 		for (auto& filePath : listFile)
 		{
 			string desPath;
@@ -218,6 +219,7 @@ void CreateXML(FileInfo& submit)
 			{
 				writeLog("Error delete " + submit.path + "/pro.xml");
 				throw MyException("Error pro.xml");
+
 			}
 			File(ass_config[submit.ass_num].xml_path).copyTo(submit.path + "/pro.xml");
 			writeLog("Copy " + ass_config[submit.ass_num].xml_path + " to " + submit.path + "/pro.xml");

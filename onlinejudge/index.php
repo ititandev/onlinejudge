@@ -13,6 +13,7 @@
       <?php include 'css/css.html'; ?>
       <link href="img/logo.png" rel="icon">
       <meta charshet="utf-8" />	
+      <link href="img/logo.png" rel="icon"> 
    </head>
    <?php 
       if ($_SERVER['REQUEST_METHOD'] == 'POST') 
@@ -20,12 +21,12 @@
           if (isset($_POST['login'])) { 
               require 'login.php';
           }
-          
       }
       ?>
    <body>
+        <div class="bg"> </div>
       <!--https://www.youtube.com/embed/MVpTk82P_xM?version=3&enablejsapi=1&html5=1&hd=1&wmode=opaque&showinfo=0&rel=0;;origin=http://60.hcmut.edu.vn;&controls=0 -->
-      <div class="form">
+      <div class="form" style=" z-index: 100; position:relative;">
          <div class="tab-content">
             <div id="login">
             	
@@ -56,5 +57,6 @@
       <!-- /form -->
       <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
       <script src="js/index.js"></script>
+      
    </body>
 </html>

@@ -32,11 +32,11 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' )
         $message_body = '
         Hello '.$first_name.',
 
-        You have requested password reset!
+        Bạn đã yêu cầu đặt lại mật khẩu!
 
-        Please click this link to reset your password:
+        Xin hãy truy cập link này và hoàn thành đặt lại mật khẩu:
 
-        http://localhost/login/reset.php?email='.$mssv.'&hash='.$hash;  
+        http://vre.hcmut.edu.vn/onlinejudge/reset.php?mssv='.$mssv.'&hash='.$hash;  
 
         mail($to, $subject, $message_body);
 
@@ -47,12 +47,13 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' )
 <!DOCTYPE html>
 <html>
 <head>
+<link href="img/logo.png" rel="icon"> 
   <title>Đặt lại mật khẩu</title>
   <?php include 'css/css.html'; ?>
 </head>
 
 <body>
-    
+<div class="bg"> </div>
   <div class="form">
 
     <h1>Đặt lại mật khẩu</h1>

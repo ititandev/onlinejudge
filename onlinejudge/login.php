@@ -21,8 +21,17 @@ else { // User exists
         
         // This is how we'll know the user is logged in
         $_SESSION['logged_in'] = true;
-		$_SESSION['message'] = "";
-        header("location: submit.php");
+        if ($mssv == 'admin')
+        {
+            $_SESSION['message'] = "";
+            $_SESSION['as_admin'] = true;
+            header("location: admin.php");
+        }
+        else
+        {
+            $_SESSION['message'] = "";
+            header("location: submit.php");
+        }
     }
     else {
         $_SESSION['message'] = "Bạn nhập sai mật khẩu! Vui lòng thử lại!";

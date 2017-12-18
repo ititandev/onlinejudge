@@ -29,27 +29,36 @@ else {
 <html >
 <head>
   <meta charset="UTF-8">
-  <title>Reset Your Password</title>
+  <title>Đổi mật khẩu</title>
   <?php include 'css/css.html'; ?>
+  <link href="img/logo.png" rel="icon"> 
 </head>
 
 <body>
+<div class="bg"> </div>
     <div class="form">
 
-          <h1>Choose Your New Password</h1>
+          <h1>Đổi mật khẩu mới</h1>
           
           <form action="reset_password.php" method="post">
               
           <div class="field-wrap">
             <label>
-              New Password<span class="req">*</span>
+              Mật khẩu cũ<span class="req">*</span>
+            </label>
+            <input type="password"required name="oldpassword" autocomplete="off"/>
+          </div>
+
+          <div class="field-wrap">
+            <label>
+              Mật khẩu mới<span class="req">*</span>
             </label>
             <input type="password"required name="newpassword" autocomplete="off"/>
           </div>
               
           <div class="field-wrap">
             <label>
-              Confirm New Password<span class="req">*</span>
+              Nhập lại mật khẩu<span class="req">*</span>
             </label>
             <input type="password"required name="confirmpassword" autocomplete="off"/>
           </div>
