@@ -1,0 +1,6 @@
+<?xml version = "1.0"?>
+<project>
+	<target name = "program" type = "output" >
+	<dependency>ptbac2.cpp</dependency>
+	</target>
+</project>

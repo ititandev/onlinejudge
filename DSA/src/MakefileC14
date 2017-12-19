@@ -1,0 +1,30 @@
+LIBS= -lstdc++fs
+CC=g++
+CFLAGS=-w -fpermissive
+CPPFLAGS=-std=c++11
+program: main.o config.o ExcuteCmd.o Resource.o FileCompare.o CRM.o FileProcess.o main.o log.o MyUtility.o pugixml.o Resource.o xmlProcess.o
+	$(CC) *.o  -L"../lib/" $(LIBS) -lpthread -lZipper-static -lz  -o program
+main.o:	main.cpp
+	$(CC) -c $(CPPFLAGS) main.cpp
+config.o: config.cpp
+	$(CC) -c $(CPPFLAGS) config.cpp
+ExcuteCmd.o: ExcuteCmd.cpp
+	$(CC) -c $(CPPFLAGS) ExcuteCmd.cpp
+FileProcess.o: FileProcess.cpp
+	$(CC) -c $(CPPFLAGS) FileProcess.cpp
+FileCompare.o: FileCompare.cpp
+	$(CC) -c $(CPPFLAGS) FileCompare.cpp
+MyUtility.o: MyUtility.cpp
+	$(CC) -c $(CPPFLAGS) MyUtility.cpp
+pugixml.o: pugixml.cpp
+	$(CC) -c $(CPPFLAGS) pugixml.cpp
+Resource.o: Resource.cpp
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) Resource.cpp
+xmlProcess.o: xmlProcess.cpp
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) xmlProcess.cpp
+CRM.o: CRM.cpp
+	$(CC) -c $(CPPFLAGS) $(CFLAGS)  CRM.cpp
+log.o: log.cpp
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) log.cpp
+clean:
+	rm -rf *.o

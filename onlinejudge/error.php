@@ -8,6 +8,7 @@ session_start();
 <link href="img/logo.png" rel="icon"> 
   <title>Lỗi</title>
   <?php include 'css/css.html'; ?>
+  <meta charshet="utf-8" />	
 </head>
 <body>
 <div class="bg"> </div>

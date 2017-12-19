@@ -14,6 +14,7 @@
       <link href="img/logo.png" rel="icon">
       <meta charshet="utf-8" />	
       <link href="img/logo.png" rel="icon"> 
+      <meta charshet="utf-8" />	
    </head>
    <?php 
       if ($_SERVER['REQUEST_METHOD'] == 'POST') 

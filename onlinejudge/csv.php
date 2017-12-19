@@ -11,10 +11,8 @@ header('Content-Disposition: attachment; filename=' . $ass_name . '.csv');
 
 $output = fopen('php://output', 'w');
 fputcsv($output, array('MSSV', 'Score', 'Time', 'Submit times'), ';');
-$times = 1;
 $conf = parse_ini_file($config_path . "/onlinejudge.conf");
-// $source_path = $conf['source_path'];
-$source_path = "./Source";
+$source_path = $conf['source_path'];
 $result = $mysqli->query("SELECT * FROM ass_map WHERE ass_name='$ass_name'");
 while ($user = $result->fetch_assoc())
 {
@@ -36,7 +34,7 @@ while ($user = $result->fetch_assoc())
     {
         $file = $source_path . '/' . $ass_name . '/' . $mssv . '/' . $times . '/' . 'score.log';
         if (file_exists($file) == 0)
-            $score = 'waiting';
+            $score = 'Grading';
         else
         {
             $myfile = fopen($file, "r");

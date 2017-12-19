@@ -131,7 +131,7 @@ else {
                     {
                         echo '<div class="table-responsive">          
                         <table class="table table-bordered table-hover">';
-                        echo '<thead><tr><th>Lần thứ</th><th>Điểm</th><tbody>';
+                        echo '<thead><tr><th>Lần thứ</th><th>Điểm</th><th>Thời gian</th></tr></thead><tbody>';
                         for($i= 1; $i <= $times; $i++) 
                         {
                             echo '<tr><td>' . $i . '</td>';
@@ -139,8 +139,10 @@ else {
                             if (file_exists($file))
                             {
                                 $open = fopen($file, 'r');
+                                $date = fgets($open);
                                 fgets($open);
                                 echo '<td>' . fgets($open) . '</td>';
+                                echo '<td>' . $date . '</td>';
                                 fclose($open);
                             }
                             else

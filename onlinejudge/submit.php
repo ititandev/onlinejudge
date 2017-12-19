@@ -29,6 +29,7 @@ else {
       <!-- Custom styles for this template -->
       <link href="css/logo-nav.css" rel="stylesheet">
       <link href="img/logo.png" rel="icon"> 
+      <meta charshet="utf-8" />	
    </head>
    <body>
       <!-- Navigation -->

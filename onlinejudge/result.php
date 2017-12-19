@@ -29,6 +29,7 @@ else {
       <!-- Custom styles for this template -->
       <link href="css/logo-nav.css" rel="stylesheet">
       <link href="img/logo.png" rel="icon"> 
+      <meta charshet="utf-8" />	
    </head>
    <body>
       <!-- Navigation -->
@@ -130,15 +131,16 @@ else {
                     }
                     else
                     {
-                        echo '<h4 style="color: #00cc00;" >Kết quả lần nộp thứ ' . $times . '</h4><br>';
+                        echo '<h4 style="color: #00cc00;" >Kết quả lần nộp thứ ' . $times;
                         $file = $conf["source_path"] . '/' . $_POST["ass_name"] . '/' . $MSSV . '/' . $times . '/' . 'score.log';
                         if (file_exists($file) == 0)
                         {
-                            echo '<div style="color: #ca5354" >Bài nộp mới nhất của sinh viên đang được chấm</div><br> ';
+                            echo '</h4><br><div style="color: #ca5354" >Bài nộp mới nhất của sinh viên đang được chấm</div><br> ';
                         }  
                         else
                         {
                             $myfile = fopen($file, "r") or die("Unable to open file!");
+                            echo ' lúc ' . fgets($myfile) . '</h4><br>';
                             echo '<div class="table-responsive">          
                             <table class="table table-bordered table-hover">';
                             $bool = false;
@@ -166,7 +168,6 @@ else {
                                     echo '</tr>';
                                 if ($i == 2)
                                     echo '</thead>';
-                                
                             }
                             if ($bool)
                                 echo '</tbody>';
@@ -178,8 +179,7 @@ else {
                             if (file_exists($file2))
                             {
                                 echo '<div style="color: #ca5354;" >Thông tin biên dịch và lỗi chương trình</div><br>
-                                <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" style=" height: 300px;display: block; margin: 0 auto;"
-                                >';
+                                <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" style=" height: 300px;display: block; margin: 0 auto;">';
     
                                 $myfile2 = fopen($file2, "r") or die("Unable to open file!");
                                 $line = fgets($myfile2);
@@ -208,15 +208,16 @@ else {
                 }
                 else
                 {
-                    echo '<h4 style="color: #00cc00;" >Kết quả lần nộp thứ ' . $times . '</h4><br>';
+                    echo '<h4 style="color: #00cc00;" >Kết quả lần nộp thứ ' . $times;
                     $file = $conf["source_path"] . '/' . $_GET["ass_name"] . '/' . $MSSV . '/' . $times . '/' . 'score.log';
                     if (file_exists($file) == 0)
                     {
-                        echo '<div style="color: #ca5354" >Bài nộp mới nhất của sinh viên đang được chấm</div><br> ';
+                        echo '</h4><br><div style="color: #ca5354" >Bài nộp mới nhất của sinh viên đang được chấm</div><br> ';
                     } 
                     else
                     {
                         $myfile = fopen($file, "r") or die("Unable to open file!");
+                        echo ' lúc ' . fgets($myfile) . '</h4><br>';
                         echo '<div class="table-responsive">          
                         <table class="table table-bordered table-hover">';
                         $bool = false;

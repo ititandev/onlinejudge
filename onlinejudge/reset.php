@@ -32,6 +32,7 @@ else {
   <title>Đổi mật khẩu</title>
   <?php include 'css/css.html'; ?>
   <link href="img/logo.png" rel="icon"> 
+  <meta charshet="utf-8" />	
 </head>
 
 <body>
@@ -41,13 +42,6 @@ else {
           <h1>Đổi mật khẩu mới</h1>
           
           <form action="reset_password.php" method="post">
-              
-          <div class="field-wrap">
-            <label>
-              Mật khẩu cũ<span class="req">*</span>
-            </label>
-            <input type="password"required name="oldpassword" autocomplete="off"/>
-          </div>
 
           <div class="field-wrap">
             <label>

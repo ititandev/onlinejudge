@@ -29,6 +29,8 @@ else {
       <!-- Custom styles for this template -->
       <link href="css/logo-nav.css" rel="stylesheet">
       <link href="img/logo.png" rel="icon"> 
+      <meta charshet="utf-8" />
+      <meta charshet="utf-8" />	
    </head>
    <body>
       <!-- Navigation -->
@@ -78,26 +80,18 @@ else {
       <div class="container">
          <h3 class="mt-5">Thông tin cá nhân</h3>
          <p>Xem thông tin cá nhân và thay đổi mật khẩu.</p>
-
+         <?php
+            echo "<h5>Họ: $last_name</h5>";
+            echo "<h5>Tên: $first_name</h5>";
+            echo "<h5>MSSV: $mssv</h5>";
+        ?>
          <form action="" method="post">
-         <div class="form-group">
-            <select class="form-control" id="selectass" onchange="document.getElementById('text_content').value=this.options[this.selectedIndex].text">
-            <option value="" disabled selected>Chọn bài tập lớn</option>
-            <?php
-                $conf = parse_ini_file($config_path . "/onlinejudge.conf");
-                for($i = 0; $i < $conf["ass_num"]; $i++)
-                    if (isset($conf["ass". $i . "_name"]))
-                        echo '<option>' . $conf["ass" . $i . "_name"] . '</option>';
-            ?>
-            </select>
-          </select>
-          <input type="hidden" name="ass_name" id="text_content" value="" />
-          </div>
          <div class="text-center">
          <input type="submit" name="reset" class="btn btn-primary center-block" value="Đổi mật khẩu" style="width: 200px">
          </div>
          
          
+        
         <?php
             if(isset($_POST['reset']))
             {

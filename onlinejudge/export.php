@@ -29,6 +29,7 @@ else {
       <!-- Custom styles for this template -->
       <link href="css/logo-nav.css" rel="stylesheet">
       <link href="img/logo.png" rel="icon"> 
+      <meta charshet="utf-8" />	
    </head>
    <body>
       <!-- Navigation -->
@@ -45,12 +46,12 @@ else {
             </button>
             <div class="collapse navbar-collapse" id="navbarResponsive">
                <ul class="navbar-nav ml-auto">
-                  <li class="nav-item active">
-                     <a class="nav-link" href="result.php"><strong>Xuất điểm</strong></a>
-                     <span class="sr-only">(current)</span>
-                  </li>
                   <li class="nav-item">
-                     <a class="nav-link" href="history.php">Lịch sử nộp bài</a>
+                     <a class="nav-link" href="admin.php">Kết quả sinh viên</a>
+                  </li>
+                  <li class="nav-item active">
+                     <a class="nav-link" href="export.php"><strong>Xuất điểm</strong></a>
+                     <span class="sr-only">(current)</span>
                   </li>
                   <li class="nav-item">
                      <a class="nav-link" href="#">   &emsp;   &emsp; </a>

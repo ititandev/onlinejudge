@@ -1,1 +1,0 @@
-g++   ptbac2.cpp   -o program

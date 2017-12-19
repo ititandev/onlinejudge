@@ -50,6 +50,7 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' )
 <link href="img/logo.png" rel="icon"> 
   <title>Đặt lại mật khẩu</title>
   <?php include 'css/css.html'; ?>
+  <meta charshet="utf-8" />	
 </head>
 
 <body>

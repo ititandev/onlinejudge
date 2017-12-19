@@ -23,12 +23,13 @@ else {
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
       <meta name="description" content="">
       <meta name="author" content="">
-      <title>Xuất điểm</title>
+      <title>Kết quả sinh viên</title>
       <!-- Bootstrap core CSS -->
       <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
       <!-- Custom styles for this template -->
       <link href="css/logo-nav.css" rel="stylesheet">
       <link href="img/logo.png" rel="icon"> 
+      <meta charshet="utf-8" />	
    </head>
    <body>
       <!-- Navigation -->
@@ -46,11 +47,11 @@ else {
             <div class="collapse navbar-collapse" id="navbarResponsive">
                <ul class="navbar-nav ml-auto">
                   <li class="nav-item active">
-                     <a class="nav-link" href="result.php"><strong>Xuất điểm</strong></a>
+                     <a class="nav-link" href="admin.php"><strong>Kết quả sinh viên</strong></a>
                      <span class="sr-only">(current)</span>
                   </li>
                   <li class="nav-item">
-                     <a class="nav-link" href="history.php">Lịch sử nộp bài</a>
+                     <a class="nav-link" href="export.php">Xuất điểm</a>
                   </li>
                   <li class="nav-item">
                      <a class="nav-link" href="#">   &emsp;   &emsp; </a>
@@ -72,7 +73,7 @@ else {
       <!-- Page Content -->
       <div class="container">
          <h3 class="mt-5">Xuất điểm</h3>
-         <p>Chọn assignment và tải về bảng kết quả.</p>
+         <p>Chọn assignment và xem bảng kết quả.</p>
 
          <form action="" method="post">
          <div class="form-group">
@@ -89,20 +90,63 @@ else {
           <input type="hidden" name="ass_name" id="text_content" value="" />
           </div>
          <div class="text-center">
-         <input type="submit" name="view" class="btn btn-primary center-block" value="Tải kết quả" style="width: 150px">
+         <input type="submit" name="view" class="btn btn-primary center-block" value="Xem kết quả" style="width: 150px">
          </div>
          
         <?php
-            
             if(isset($_POST['view']))
             {
                 echo '<br>';
                 if ($_POST['ass_name'] == "")
                 {
-                    echo '<div style="color: #ca5354;">Chọn một bài tập lớn để tải</div> <br>';
+                    echo '<div style="color: #ca5354;">Chọn một bài tập lớn để xem</div> <br>';
                 }
                 else
-                    header("location: csv.php?ass_name=" . $_POST['ass_name']);
+                {
+                    echo '<div class="table-responsive">          
+                    <table class="table table-bordered table-hover">';
+                    echo '<thead><tr><th>Sinh viên</th><th>Điểm</th>';
+                    echo '<th>Lần nộp</th><th>Thời gian</th><tbody>';
+                    $ass_name = $_POST['ass_name'];
+                    $conf = parse_ini_file($config_path . "/onlinejudge.conf");
+                    $source_path = $conf['source_path'];
+                    $result = $mysqli->query("SELECT * FROM ass_map WHERE ass_name='$ass_name'");
+                    while ($user = $result->fetch_assoc())
+                    {
+                        $score = 0; $date = '';
+                        $times = 1;
+                        $mssv = $user['mssv'];
+                        for (;; $times++)
+                        {
+                            $dir = $source_path . '/' . $ass_name . '/' . $mssv . '/' . $times . '/';
+                            if (file_exists($dir) == 0)
+                            {
+                                break;
+                            }
+                        }
+                        $times--;
+                        if($times == 0)
+                            $score = 13;
+                        else
+                        {
+                            $file = $source_path . '/' . $ass_name . '/' . $mssv . '/' . $times . '/' . 'score.log';
+                            if (file_exists($file) == 0)
+                                $score = 'waiting';
+                            else
+                            {
+                                $myfile = fopen($file, "r");
+                                $date = fgets($myfile);
+                                fgets($myfile);
+                                $score = fgets($myfile);
+                            }
+                        }
+                        echo "<tr><td>$mssv</td>";
+                        echo "<td>$score</td>";
+                        echo "<td>$times</td>";
+                        echo "<td>$date</td></tr>";
+                    }
+                    echo '</tbody></table></div>';
+                }
             }
         ?>
         </form>

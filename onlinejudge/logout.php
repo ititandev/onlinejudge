@@ -11,6 +11,7 @@ session_destroy();
   <title>Error</title>
   <?php include 'css/css.html'; ?>
   <link href="img/logo.png" rel="icon"> 
+  <meta charshet="utf-8" />	
 </head>
 
 <body>
